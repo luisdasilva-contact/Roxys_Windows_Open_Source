@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>Roxy</title>
+	<style>
+		html,
+		body {
+			background: #000;
+			width: 100%;
+			height: 100%;
+			overflow: visible;
+			padding: 0;
+			margin: 0;
+		}
+
+		div#gameContainer {
+			background: transparent !important;
+			position: absolute;
+		}
+
+		div#gameContainer canvas {
+			position: absolute;
+		}
+
+		div#loadingText {
+			padding-left: 2%;
+			font-family:verdana;
+			font-size: 28px;
+			color: white;
+		}
+
+		div#gameContainer canvas[data-pixel-art="true"] {
+			position: absolute;
+			image-rendering: optimizeSpeed;
+			image-rendering: -webkit-crisp-edges;
+			image-rendering: -moz-crisp-edges;
+			image-rendering: -o-crisp-edges;
+			image-rendering: crisp-edges;
+			image-rendering: -webkit-optimize-contrast;
+			image-rendering: optimize-contrast;
+			image-rendering: pixelated;
+			-ms-interpolation-mode: nearest-neighbor;
+		}
+		div#unity-warning { 
+			position: absolute; 
+			left: 50%; 
+			top: 10%; 
+			transform: translate(-50%); 
+			background: white; 
+			padding: 10px; 
+			display: none;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="unity-warning"> </div>
+	<div id="gameContainer">
+		<canvas id="unity-canvas" data-pixel-art=""></canvas>
+		<script src="Build/Build.loader.js"></script>
+		<script>
+			var warningBanner = document.querySelector("#unity-warning");
+			var canvas = document.querySelector("#unity-canvas");
+			var config = {
+				dataUrl: "Build/Build.data.br",
+				frameworkUrl: "Build/Build.framework.js.br",
+				codeUrl: "Build/Build.wasm.br",
+				streamingAssetsUrl: "StreamingAssets",
+				companyName: "DefaultCompany",
+				productName: "Roxy",
+				productVersion: "1.0",
+				showBanner: unityShowBanner,
+			};
+			var scaleToFit;
+			try {
+				scaleToFit = !!JSON.parse("");
+			} catch (e) {
+				scaleToFit = true;
+			}
+
+// Shows a temporary message banner/ribbon for a few seconds, or
+      // a permanent error message on top of the canvas if type=='error'.
+      // If type=='warning', a yellow highlight color is used.
+      // Modify or remove this function to customize the visually presented
+      // way that non-critical warnings and error messages are presented to the
+      // user.
+
+	function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+    }
+
+    function unityShowBanner(msg, type) {        
+    var div = document.createElement('div');
+    div.innerHTML = msg;
+    warningBanner.appendChild(div);
+    if (type == 'error') div.style = 'background: red; padding: 10px;';
+    else {
+        if (type == 'warning') div.style = 'background: white; padding: 10px;';
+        setTimeout(function() {
+        warningBanner.removeChild(div);
+        updateBannerVisibility();
+        }, 5000);
+    }
+    updateBannerVisibility();
+    }
+
+	function clearText(elementID){
+		document.getElementById(elementID).innerHTML = "";
+	}
+
+	function progressHandler(progress) {
+		var percent = progress * 100 + '%';
+		canvas.style.background = 'linear-gradient(to right, white, white ' + percent + ', transparent ' + percent + ', transparent) no-repeat center';
+		canvas.style.backgroundSize = '100% 1rem';
+	}
+
+	function onResize() {
+		var container = canvas.parentElement;
+		var w;
+		var h;
+
+		if (scaleToFit) {
+			w = window.innerWidth;
+			h = window.innerHeight;
+
+			var r = 540 / 960;
+
+			if (w * r > window.innerHeight) {
+				w = Math.min(w, Math.ceil(h / r));
+			}
+			h = Math.floor(w * r);
+		} else {
+			w = 960;
+			h = 540;
+		}
+
+		container.style.width = canvas.style.width = w + "px";
+		container.style.height = canvas.style.height = h + "px";
+		container.style.top = Math.floor((window.innerHeight - h) / 2) + "px";
+		container.style.left = Math.floor((window.innerWidth - w) / 2) + "px";
+	}
+	createUnityInstance(canvas, config, progressHandler).then(function (instance) {
+		clearText("loadingText");
+		canvas = instance.Module.canvas;
+		onResize();
+	});
+	window.addEventListener('resize', onResize);
+	onResize();
+
+	if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+		unityShowBanner('Heads up, iDevices may have trouble running this game!', 'warning');
+		// Mobile device style: fill the whole browser client area with the game canvas:
+		const meta = document.createElement('meta');
+		meta.name = 'viewport';
+		meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+		document.getElementsByTagName('head')[0].appendChild(meta);
+	}
+		</script>
+	</div>
+	<div id="loadingText">
+	<p>Loading...</p>
+	</div>
+
+</body>
+
+</html>
